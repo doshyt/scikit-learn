@@ -28,15 +28,17 @@ print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
+import itertools
 
 from sklearn import svm, datasets
-from sklearn.model_selection import train_test_split
+from sklearn.cross_validation import train_test_split
 from sklearn.metrics import confusion_matrix
 
 # import some data to play with
 iris = datasets.load_iris()
 X = iris.data
 y = iris.target
+class_names = iris.target_names
 
 # Split the data into a training set and a test set
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
@@ -47,13 +49,19 @@ classifier = svm.SVC(kernel='linear', C=0.01)
 y_pred = classifier.fit(X_train, y_train).predict(X_test)
 
 
-def plot_confusion_matrix(cm, title='Confusion matrix', cmap=plt.cm.Blues):
+def plot_confusion_matrix(cm, classes, title='Confusion matrix', cmap=plt.cm.Blues):
     plt.imshow(cm, interpolation='nearest', cmap=cmap)
     plt.title(title)
     plt.colorbar()
-    tick_marks = np.arange(len(iris.target_names))
-    plt.xticks(tick_marks, iris.target_names, rotation=45)
-    plt.yticks(tick_marks, iris.target_names)
+    tick_marks = np.arange(len(classes))
+    plt.xticks(tick_marks, classes, rotation=45)
+    plt.yticks(tick_marks, classes)
+    thresh = cm.max() / 2.
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        plt.text(j, i, cm[i, j],
+                 horizontalalignment="center",
+                 color="white" if cm[i, j] > thresh else "black")
+
     plt.tight_layout()
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
@@ -65,7 +73,7 @@ np.set_printoptions(precision=2)
 print('Confusion matrix, without normalization')
 print(cm)
 plt.figure()
-plot_confusion_matrix(cm)
+plot_confusion_matrix(cm, classes=class_names)
 
 # Normalize the confusion matrix by row (i.e by the number of samples
 # in each class)
@@ -73,6 +81,6 @@ cm_normalized = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
 print('Normalized confusion matrix')
 print(cm_normalized)
 plt.figure()
-plot_confusion_matrix(cm_normalized, title='Normalized confusion matrix')
+plot_confusion_matrix(cm_normalized, classes=class_names, title='Normalized confusion matrix')
 
 plt.show()
